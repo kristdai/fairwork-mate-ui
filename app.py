@@ -16,12 +16,9 @@ st.markdown(
         --card:#F2ECFF;
         --border:#E5E7EB;
       }
-      /* tighten default Streamlit padding */
       .block-container { padding-top: 2.2rem; padding-bottom: 2.0rem; max-width: 980px; }
-      /* remove extra top spacing */
       header { visibility: hidden; height: 0px; }
 
-      /* brand row */
       .brand-row{
         display:flex; align-items:center; gap:14px; margin-bottom: 10px;
       }
@@ -36,7 +33,6 @@ st.markdown(
         font-size: 30px; font-weight: 800; letter-spacing: -0.02em;
       }
 
-      /* hero */
       .hero-title{
         font-size: 62px; line-height: 1.02; font-weight: 900; letter-spacing: -0.03em;
         margin: 18px 0 10px 0;
@@ -47,7 +43,6 @@ st.markdown(
         max-width: 860px; margin: 0 auto 20px auto;
       }
 
-      /* CTA button styling (Streamlit uses <button> inside .stButton) */
       div.stButton > button{
         background: var(--purple);
         border: 1px solid rgba(0,0,0,0.06);
@@ -63,7 +58,6 @@ st.markdown(
         border-color: rgba(0,0,0,0.08);
       }
 
-      /* helper line */
       .helper{
         display:flex; gap:14px; align-items:center; justify-content:center;
         color: var(--muted);
@@ -72,7 +66,6 @@ st.markdown(
       }
       .helper .dot{ opacity: 0.5; }
 
-      /* example card */
       .example-card{
         margin-top: 26px;
         background: var(--card);
@@ -91,11 +84,7 @@ st.markdown(
       }
       .example-q b{ font-weight: 900; }
       .example-q .accent{ color: var(--purple); font-weight: 900; }
-      .example-cta{
-        display:flex; align-items:center; justify-content:flex-end;
-        margin-top: 10px;
-      }
-      /* make the second button smaller */
+
       .small-cta div.stButton > button{
         font-size: 16px !important;
         padding: 10px 16px !important;
@@ -103,17 +92,14 @@ st.markdown(
         box-shadow: none !important;
       }
 
-      /* center text blocks */
       .center { text-align: center; }
 
-      /* input look */
       .stTextInput input{
         border-radius: 12px;
         border: 1px solid var(--border);
         padding: 12px 12px;
       }
 
-      /* chat container */
       .chat-wrap{
         margin-top: 16px;
         border: 1px solid var(--border);
@@ -121,7 +107,6 @@ st.markdown(
         padding: 14px 14px;
         background: white;
       }
-
     </style>
     """,
     unsafe_allow_html=True,
@@ -132,6 +117,9 @@ st.markdown(
 # ---------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []  # [{"role": "user"/"assistant", "content": "..."}]
+
+if "show_chat" not in st.session_state:
+    st.session_state.show_chat = True
 
 # ---------------------------
 # Header / Hero
@@ -160,10 +148,10 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Primary CTA (UI-only)
+# Primary CTA (unique key)
 c1, c2, c3 = st.columns([1, 2, 1])
 with c2:
-    if st.button("✨ Ask FairWork Mate", use_container_width=True):
+    if st.button("✨ Ask FairWork Mate", use_container_width=True, key="cta_hero"):
         st.session_state.show_chat = True
 
 st.markdown(
@@ -178,7 +166,7 @@ st.markdown(
 )
 
 # ---------------------------
-# Example card with pre-filled prompt
+# Example card
 # ---------------------------
 st.markdown(
     """
@@ -193,10 +181,11 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Input + Example CTA (unique key)
 with st.container():
     ex_cols = st.columns([3, 1])
     with ex_cols[0]:
-        example_clicked = st.text_input(
+        q = st.text_input(
             label="",
             placeholder="Type your question here…",
             key="q_input",
@@ -204,15 +193,19 @@ with st.container():
         )
     with ex_cols[1]:
         st.markdown('<div class="small-cta">', unsafe_allow_html=True)
-        ask_clicked = st.button("✨ Ask FairWork Mate", use_container_width=True)
+        ask_clicked = st.button("✨ Ask FairWork Mate", use_container_width=True, key="cta_example")
         st.markdown("</div>", unsafe_allow_html=True)
+
+# If example button clicked, append user message and show a loading placeholder
+if ask_clicked and q.strip():
+    st.session_state.messages.append({"role": "user", "content": q.strip()})
+    # (UI-only) Insert a placeholder assistant "loading" bubble
+    st.session_state.messages.append({"role": "assistant", "content": "⏳ Loading response…"})
 
 # ---------------------------
 # Chat UI (UI-only placeholder behaviour)
 # ---------------------------
-show_chat = st.session_state.get("show_chat", True)
-
-if show_chat:
+if st.session_state.show_chat:
     st.markdown('<div class="chat-wrap">', unsafe_allow_html=True)
 
     # Render messages
@@ -220,22 +213,11 @@ if show_chat:
         with st.chat_message(m["role"]):
             st.markdown(m["content"])
 
-    # If example ask clicked, treat input as user message
-    if ask_clicked and (example_clicked or st.session_state.get("q_input", "").strip()):
-        user_text = (example_clicked or st.session_state.get("q_input", "")).strip()
-        if user_text:
-            st.session_state.messages.append({"role": "user", "content": user_text})
-            # UI-only simulated assistant response (loading)
-            with st.chat_message("assistant"):
-                with st.spinner("Thinking…"):
-                    st.write("")
-
-    # Standard chat input
+    # Standard chat input (UI only)
     prompt = st.chat_input("Ask a question about awards, pay rates, leave, or compliance…")
     if prompt:
         st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking…"):
-                st.write("")
+        st.session_state.messages.append({"role": "assistant", "content": "⏳ Loading response…"})
+        st.rerun()
 
     st.markdown("</div>", unsafe_allow_html=True)
