@@ -10,7 +10,6 @@ st.set_page_config(
 )
 
 # ─── Replace with your Google Drive logo direct link ───
-# Format: https://drive.google.com/uc?export=view&id=<FILE_ID>
 LOGO_URL = "https://drive.google.com/uc?export=view&id=REPLACE_WITH_YOUR_FILE_ID"
 
 # ─── Custom CSS ───
@@ -34,13 +33,19 @@ st.markdown(
 .hero-title .accent{color:#7C3AED;}
 .hero-sub{text-align:center;color:#555;font-size:1rem;line-height:1.75;max-width:590px;margin:10px auto 36px;}
 
-/* ── query card ── */
-.query-card{background:#FAF5FF;border-radius:22px;padding:30px 34px 22px;max-width:660px;margin:0 auto;}
-.query-hint{font-size:.94rem;color:#333;margin-bottom:14px;line-height:1.6;}
-.query-hint u{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px;font-weight:700;}
-.query-hint .lv{color:#7C3AED;font-weight:700;}
+/* ── tall text area (3x height) ── */
+div[data-testid="stTextArea"] textarea{
+    border:2px solid #E9D5FF!important;border-radius:14px!important;
+    padding:16px 18px!important;font-size:.95rem!important;
+    font-family:'Inter',sans-serif!important;background:#fff!important;
+    min-height:126px!important;height:126px!important;
+    resize:none!important;
+}
+div[data-testid="stTextArea"] textarea:focus{
+    border-color:#7C3AED!important;box-shadow:0 0 0 2px rgba(124,58,237,.15)!important;
+}
 
-/* ── inputs ── */
+/* ── regular text input (chat page) ── */
 div[data-testid="stTextInput"] input{
     border:2px solid #E9D5FF!important;border-radius:12px!important;
     padding:14px 16px!important;font-size:.95rem!important;
@@ -88,13 +93,6 @@ div[data-testid="stTextInput"] input:focus{
 
 /* ── divider ── */
 .sep{border:none;border-top:1px solid #f0f0f0;margin:18px 0;}
-
-/* ── typing indicator ── */
-.typing{display:flex;gap:5px;padding:12px 20px;}
-.typing span{width:8px;height:8px;border-radius:50%;background:#7C3AED;animation:bounce .6s infinite alternate;}
-.typing span:nth-child(2){animation-delay:.2s;}
-.typing span:nth-child(3){animation-delay:.4s;}
-@keyframes bounce{to{opacity:.3;transform:translateY(-4px);}}
 </style>
 """,
     unsafe_allow_html=True,
@@ -105,8 +103,6 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "page" not in st.session_state:
     st.session_state.page = "home"
-if "thinking" not in st.session_state:
-    st.session_state.thinking = False
 
 # ─── Dummy Responses ───
 RESPONSES = {
@@ -198,7 +194,7 @@ def get_response(q: str) -> str:
     return RESPONSES["default"]
 
 
-# ─── Brand Header (always shown) ───
+# ─── Brand Header ───
 st.markdown(
     f"""
 <div class="brand">
@@ -226,19 +222,12 @@ if st.session_state.page == "home":
         unsafe_allow_html=True,
     )
 
-    # ── query card ──
-    st.markdown(
-        """<div class="query-card">
-        <div class="query-hint">
-            What is the Sunday <u>penalty rate</u> for a casual <span class="lv">Level 2</span> retail employee?
-        </div>""",
-        unsafe_allow_html=True,
-    )
-
-    question = st.text_input(
+    # ── Tall text area input (no card/hint above) ──
+    question = st.text_area(
         "question",
-        placeholder="Type your employment law question here …",
+        placeholder="What is the Sunday penalty rate for a casual Level 2 retail employee?",
         label_visibility="collapsed",
+        height=126,
         key="home_q",
     )
 
@@ -246,10 +235,12 @@ if st.session_state.page == "home":
     with rc:
         go = st.button("✨ Ask FairWork Mate", key="home_btn", use_container_width=True)
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
     if go:
-        q = question.strip() if question.strip() else "What is the Sunday penalty rate for a casual Level 2 retail employee?"
+        q = (
+            question.strip()
+            if question.strip()
+            else "What is the Sunday penalty rate for a casual Level 2 retail employee?"
+        )
         st.session_state.messages.append({"role": "user", "content": q})
         st.session_state.messages.append(
             {"role": "assistant", "content": get_response(q)}
@@ -268,7 +259,7 @@ if st.session_state.page == "home":
     for col, s in zip(sample_cols, samples):
         with col:
             if st.button(s, key=f"sample_{s}", use_container_width=True):
-                clean = s.split(" ", 1)[1]  # strip emoji
+                clean = s.split(" ", 1)[1]
                 st.session_state.messages.append({"role": "user", "content": clean})
                 st.session_state.messages.append(
                     {"role": "assistant", "content": get_response(clean)}
@@ -286,7 +277,6 @@ if st.session_state.page == "home":
 # ════════════════════════════════════════════
 elif st.session_state.page == "chat":
 
-    # ── top bar ──
     left, right = st.columns([1, 3])
     with left:
         st.markdown('<div class="back-btn">', unsafe_allow_html=True)
@@ -298,7 +288,6 @@ elif st.session_state.page == "chat":
 
     st.markdown('<hr class="sep">', unsafe_allow_html=True)
 
-    # ── render conversation ──
     for msg in st.session_state.messages:
         if msg["role"] == "user":
             st.markdown(
@@ -311,7 +300,6 @@ elif st.session_state.page == "chat":
 
     st.markdown('<hr class="sep">', unsafe_allow_html=True)
 
-    # ── follow-up input ──
     st.markdown(
         '<p style="font-size:.85rem;color:#888;margin-bottom:4px;">Ask a follow-up question</p>',
         unsafe_allow_html=True,
