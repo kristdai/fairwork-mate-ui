@@ -10,7 +10,7 @@ st.set_page_config(
 )
 
 # ─── Replace with your Google Drive logo direct link ───
-LOGO_URL = "https://drive.google.com/file/d/11WAQUp-HaDIzILNDwDqWeOl6Oag6V83F/view"
+LOGO_URL = "https://github.com/kristdai/fairwork-mate-ui/blob/main/Screenshot%202026-02-26%20112050.png"
 
 # ─── Custom CSS ───
 st.markdown(
