@@ -10,7 +10,7 @@ st.set_page_config(
 )
 
 # ─── Replace with your Google Drive logo direct link ───
-LOGO_URL = "https://drive.google.com/uc?export=view&id=REPLACE_WITH_YOUR_FILE_ID"
+LOGO_URL = "https://drive.google.com/uc?export=view&id=11WAQUp-HaDIzILNDwDqWeOl6Oag6V83F"
 
 # ─── Custom CSS ───
 st.markdown(
